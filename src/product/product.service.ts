@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from './product.entity';
@@ -20,28 +19,18 @@ export class ProductService {
 
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
-  ) {
-    this.initialize(); // Code smell 2: Llamada a método innecesario en el constructor
-  }
+  ) {}
 
   async findAll(): Promise<ProductEntity[]> {
-    console.log('Fetching all products'); // Code smell 3: Uso de console.log en código de producción
-
-    const unusedVariable = 'I am not used'; // Code smell 4: Variable no utilizada
-
-    // Code smell 5: Bucle innecesario que no hace nada
-    for (let i = 0; i < 5; i++) {
-      // No operation
-    }
-
-    const cached: ProductEntity[] =
-      await this.cacheManager.get<ProductEntity[]>('products'); // Code smell 6: Valor hard-coded en lugar de usar variable
+    const cached: ProductEntity[] = await this.cacheManager.get<
+      ProductEntity[]
+    >(this.cacheKey);
 
     if (!cached) {
       const products: ProductEntity[] = await this.productRepository.find({
         relations: ['category'],
       });
-      await this.cacheManager.set('products', products); // Repetido hard-coded
+      await this.cacheManager.set(this.cacheKey, products);
       return products;
     }
 
@@ -59,15 +48,10 @@ export class ProductService {
         BusinessError.NOT_FOUND,
       );
 
-    // Vulnerabilidad/Bug: Exposición de datos sensibles
-    console.log('Product data:', product); // Se está registrando información sensible
-
     return product;
   }
 
-  async create(product: any): Promise<ProductEntity> {
-    // Code smell 7: Uso del tipo 'any'
-    // Code smell 8: No manejar posibles errores
+  async create(product: ProductEntity): Promise<ProductEntity> {
     return await this.productRepository.save(product);
   }
 
@@ -80,7 +64,6 @@ export class ProductService {
         BusinessError.NOT_FOUND,
       );
 
-    // Code smell 9: Spread innecesario de objetos
     return await this.productRepository.save({
       ...persistedProduct,
       ...product,
@@ -88,23 +71,15 @@ export class ProductService {
   }
 
   async delete(id: string) {
-    try {
-      const product: ProductEntity = await this.productRepository.findOne({
-        where: { id },
-      });
-      if (!product)
-        throw new BusinessLogicException(
-          'The product with the given id was not found',
-          BusinessError.NOT_FOUND,
-        );
+    const product: ProductEntity = await this.productRepository.findOne({
+      where: { id },
+    });
+    if (!product)
+      throw new BusinessLogicException(
+        'The product with the given id was not found',
+        BusinessError.NOT_FOUND,
+      );
 
-      await this.productRepository.remove(product);
-    } catch (error) {
-      // Code smell 10: Bloque catch vacío
-    }
-  }
-
-  private initialize() {
-    // Code smell 11: Método privado no utilizado
+    await this.productRepository.remove(product);
   }
 }
