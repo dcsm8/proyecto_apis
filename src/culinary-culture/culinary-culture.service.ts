@@ -10,25 +10,28 @@ import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class CulinaryCultureService {
-
-  cacheKey: string = "culinary-culture";
+  cacheKey: string = 'culinary-culture';
 
   constructor(
     @InjectRepository(CulinaryCultureEntity)
     private readonly culinaryCultureRepository: Repository<CulinaryCultureEntity>,
 
     @Inject(CACHE_MANAGER)
-       private readonly cacheManager: Cache
+    private readonly cacheManager: Cache,
   ) {}
 
   async findAll(): Promise<CulinaryCultureEntity[]> {
-    const cached: CulinaryCultureEntity[] = await this.cacheManager.get<CulinaryCultureEntity[]>(this.cacheKey);
-      
-    if(!cached){
-        const culinaryCultures: CulinaryCultureEntity[] = await this.culinaryCultureRepository.find({
-          relations: ['countries', 'products', 'recipes', 'restaurants'],})
-        await this.cacheManager.set(this.cacheKey, culinaryCultures);
-        return culinaryCultures;
+    const cached: CulinaryCultureEntity[] = await this.cacheManager.get<
+      CulinaryCultureEntity[]
+    >(this.cacheKey);
+
+    if (!cached) {
+      const culinaryCultures: CulinaryCultureEntity[] =
+        await this.culinaryCultureRepository.find({
+          relations: ['countries', 'products', 'recipes', 'restaurants'],
+        });
+      await this.cacheManager.set(this.cacheKey, culinaryCultures);
+      return culinaryCultures;
     }
 
     return cached;
@@ -56,6 +59,24 @@ export class CulinaryCultureService {
   }
 
   async update(
+    id: string,
+    culinaryCulture: CulinaryCultureEntity,
+  ): Promise<CulinaryCultureEntity> {
+    const persistedCulinaryCulture: CulinaryCultureEntity =
+      await this.culinaryCultureRepository.findOne({ where: { id } });
+    if (!persistedCulinaryCulture)
+      throw new BusinessLogicException(
+        'The culinary culture with the given id was not found',
+        BusinessError.NOT_FOUND,
+      );
+
+    return await this.culinaryCultureRepository.save({
+      ...persistedCulinaryCulture,
+      ...culinaryCulture,
+    });
+  }
+
+  async updateSonar(
     id: string,
     culinaryCulture: CulinaryCultureEntity,
   ): Promise<CulinaryCultureEntity> {
