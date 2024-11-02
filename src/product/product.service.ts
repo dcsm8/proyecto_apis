@@ -9,7 +9,6 @@ import {
 } from '../shared/errors/business-errors';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { HttpService } from '@nestjs/axios'; // Code smell 1: Import no utilizado
 
 @Injectable()
 export class ProductService {

@@ -8,7 +8,6 @@ import {
 } from '../shared/errors/business-errors';
 import { CountryEntity } from './country.entity';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
-import { HttpService } from '@nestjs/axios'; // Code smell 1: Import no utilizado
 
 @Injectable()
 export class CountryService {
